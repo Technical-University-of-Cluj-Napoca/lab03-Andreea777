@@ -27,140 +27,169 @@ def get_delay():
 ALGO_INFO = {
     "BFS": {
         "title": "Breadth-First Search (BFS)",
-        "desc": "BFS explores neighbors level-by-level (like ripples). It guarantees the shortest path in an unweighted grid.",
+        "desc": "BFS explores neighbors level-by-level using a queue. It guarantees the shortest path in an unweighted grid.",
         "pseudocode": [
             "queue ← [start]",
             "visited ← {start}",
             "came_from ← {}",
             "while queue not empty:",
-            "    u ← queue.pop_left()",
-            "    if u == end: reconstruct_path and return",
-            "    for v in neighbors(u):",
-            "        if v not in visited and not barrier:",
+            "    u ← dequeue()",
+            "    if u == end:",
+            "        reconstruct_path(came_from, end)",
+            "        return True",
+            "    for each neighbor v of u:",
+            "        if v not in visited and v not barrier:",
             "            visited.add(v)",
-            "            came_from[v] = u",
-            "            queue.append(v)"
+            "            came_from[v] ← u",
+            "            enqueue(v)",
+            "return False"
         ],
         "time": "O(V + E)",
         "space": "O(V)"
     },
     "DFS": {
         "title": "Depth-First Search (DFS)",
-        "desc": "DFS dives as deep as possible before backtracking. It does not guarantee the shortest path in general.",
+        "desc": "DFS explores as deep as possible before backtracking using a stack. Does not guarantee the shortest path.",
         "pseudocode": [
             "stack ← [start]",
             "visited ← {start}",
             "came_from ← {}",
             "while stack not empty:",
-            "    u ← stack.pop()",
-            "    if u == end: reconstruct_path and return",
-            "    for v in neighbors(u):",
-            "        if v not in visited and not barrier:",
+            "    u ← pop()",
+            "    if u == end:",
+            "        reconstruct_path(came_from, end)",
+            "        return True",
+            "    for each neighbor v of u:",
+            "        if v not in visited and v not barrier:",
             "            visited.add(v)",
-            "            came_from[v] = u",
-            "            stack.push(v)"
+            "            came_from[v] ← u",
+            "            push(v)",
+            "return False"
         ],
         "time": "O(V + E)",
-        "space": "O(V) (worst-case recursion/stack)"
+        "space": "O(V)"
     },
     "A*": {
         "title": "A* Search",
-        "desc": "A* uses both the path cost so far (g) and a heuristic (h) to the goal. With an admissible heuristic, it is optimal and complete.",
+        "desc": "A* uses g(n) = cost from start and h(n) = heuristic to goal. Optimal with admissible heuristic.",
         "pseudocode": [
-            "open ← priority queue with (f(start), start)",
-            "g[start] = 0; came_from ← {}",
-            "while open not empty:",
-            "    u ← node with smallest f",
-            "    if u == end: reconstruct_path and return",
-            "    for v in neighbors(u):",
-            "        tentative_g = g[u] + 1",
-            "        if tentative_g < g[v]:",
-            "            came_from[v] = u",
-            "            g[v] = tentative_g",
-            "            f[v] = g[v] + h(v, end)",
-            "            push v into open"
+            "open_set ← priority queue with start",
+            "g_score[start] ← 0",
+            "f_score[start] ← h(start, end)",
+            "came_from ← {}",
+            "while open_set not empty:",
+            "    u ← node in open_set with lowest f_score",
+            "    if u == end:",
+            "        reconstruct_path(came_from, end)",
+            "        return True",
+            "    for each neighbor v of u:",
+            "        tentative_g ← g_score[u] + 1",
+            "        if tentative_g < g_score[v]:",
+            "            came_from[v] ← u",
+            "            g_score[v] ← tentative_g",
+            "            f_score[v] ← g_score[v] + h(v, end)",
+            "            if v not in open_set: add v",
+            "return False"
         ],
-        "time": "O(E) average; up to O(V^2) with array-based PQ",
+        "time": "O(E log V) with binary heap",
         "space": "O(V)"
     },
     "UCS": {
         "title": "Uniform Cost Search (UCS)",
-        "desc": "UCS (Dijkstra for uniform edges) always expands the least-cost frontier node. Guarantees optimal paths in graphs with non-negative weights.",
+        "desc": "UCS (Dijkstra's algorithm) always expands the lowest-cost node. Guarantees optimal paths.",
         "pseudocode": [
-            "open ← priority queue with (0, start)",
-            "cost[start] = 0; came_from ← {}",
-            "while open not empty:",
-            "    (c, u) ← pop(open)",
-            "    if u == end: reconstruct_path and return",
-            "    for v in neighbors(u):",
-            "        new_cost = c + 1",
-            "        if v not in cost or new_cost < cost[v]:",
-            "            cost[v] = new_cost",
-            "            came_from[v] = u",
-            "            push (new_cost, v) into open"
+            "open_set ← priority queue with (0, start)",
+            "cost_so_far[start] ← 0",
+            "came_from ← {}",
+            "while open_set not empty:",
+            "    (current_cost, u) ← pop from open_set",
+            "    if u == end:",
+            "        reconstruct_path(came_from, end)",
+            "        return True",
+            "    for each neighbor v of u:",
+            "        new_cost ← current_cost + 1",
+            "        if v not in cost_so_far or",
+            "           new_cost < cost_so_far[v]:",
+            "            cost_so_far[v] ← new_cost",
+            "            came_from[v] ← u",
+            "            add (new_cost, v) to open_set",
+            "return False"
         ],
-        "time": "O(E log V) with a binary heap",
+        "time": "O(E log V) with binary heap",
         "space": "O(V)"
     },
     "Greedy": {
         "title": "Greedy Best-First Search",
-        "desc": "Greedy expands the node that appears closest to the goal by heuristic only. Fast in practice, but not optimal.",
+        "desc": "Greedy expands the node closest to goal by heuristic only. Fast but not optimal.",
         "pseudocode": [
-            "open ← priority queue with (h(start), start)",
-            "visited ← {start}; came_from ← {}",
-            "while open not empty:",
-            "    (_, u) ← pop(open)",
-            "    if u == end: reconstruct_path and return",
-            "    for v in neighbors(u):",
-            "        if v not in visited and not barrier:",
+            "open_set ← priority queue with (h(start), start)",
+            "visited ← {start}",
+            "came_from ← {}",
+            "while open_set not empty:",
+            "    (_, u) ← pop from open_set",
+            "    if u == end:",
+            "        reconstruct_path(came_from, end)",
+            "        return True",
+            "    for each neighbor v of u:",
+            "        if v not in visited and v not barrier:",
             "            visited.add(v)",
-            "            came_from[v] = u",
-            "            push (h(v), v) into open"
+            "            came_from[v] ← u",
+            "            add (h(v, end), v) to open_set",
+            "return False"
         ],
         "time": "O(E) average; depends on heuristic",
         "space": "O(V)"
     },
     "IDDFS": {
         "title": "Iterative Deepening DFS (IDDFS)",
-        "desc": "Runs DFS with increasing depth limits (0, 1, 2, ...). Finds shortest path by depth with small memory footprint.",
+        "desc": "Runs depth-limited DFS with increasing limits. Combines DFS space efficiency with BFS completeness.",
         "pseudocode": [
-            "for depth in [0..max_depth]:",
-            "    if DLS(start, depth) succeeds: return path",
-            "function DLS(u, limit):",
-            "    if u == end: return success",
-            "    if limit == 0: return cutoff",
-            "    for v in neighbors(u):",
-            "        if DLS(v, limit-1) succeeds: return success",
-            "    return failure/cutoff"
+            "for depth_limit from 0 to max_depth:",
+            "    result ← DLS(start, depth_limit)",
+            "    if result == True: return True",
+            "return False",
+            "",
+            "function DLS(node, limit):",
+            "    if node == end: return True",
+            "    if limit == 0: return False",
+            "    for each neighbor v of node:",
+            "        if v not barrier and not visited:",
+            "            if DLS(v, limit - 1) == True:",
+            "                return True",
+            "    return False"
         ],
-        "time": "O(b^d) (like BFS overall, with repetition)",
-        "space": "O(bd)"
+        "time": "O(b^d) where b=branching, d=depth",
+        "space": "O(d)"
     },
     "IDA*": {
         "title": "Iterative Deepening A* (IDA*)",
-        "desc": "Performs DFS-style searches bounded by increasing f = g + h thresholds. A*’s heuristic guidance with DFS memory usage.",
+        "desc": "DFS with f-cost threshold that increases iteratively. Combines A* optimality with low memory.",
         "pseudocode": [
-            "bound = h(start); path = [start]",
-            "while True:",
-            "    t = search(path, g=0, bound)",
+            "bound ← h(start, end)",
+            "path ← [start]",
+            "loop:",
+            "    t ← search(path, 0, bound)",
             "    if t == FOUND: return path",
             "    if t == ∞: return failure",
-            "    bound = t",
+            "    bound ← t",
+            "",
             "function search(path, g, bound):",
-            "    u = last(path); f = g + h(u)",
+            "    node ← last element of path",
+            "    f ← g + h(node, end)",
             "    if f > bound: return f",
-            "    if u == end: return FOUND",
-            "    min = ∞",
-            "    for v in neighbors(u):",
-            "        path.push(v)",
-            "        t = search(path, g+1, bound)",
-            "        if t == FOUND: return FOUND",
-            "        if t < min: min = t",
-            "        path.pop()",
+            "    if node == end: return FOUND",
+            "    min ← ∞",
+            "    for each neighbor v of node:",
+            "        if v not in path and v not barrier:",
+            "            append v to path",
+            "            t ← search(path, g+1, bound)",
+            "            if t == FOUND: return FOUND",
+            "            if t < min: min ← t",
+            "            remove v from path",
             "    return min"
         ],
-        "time": "Depends on heuristic; often between DFS and A*",
-        "space": "O(bd)"
+        "time": "Depends on heuristic quality",
+        "space": "O(d)"
     }
 }
 
@@ -338,11 +367,13 @@ def draw_info_popup_blocking(selected_algo_key):
     while waiting:
         for e in pygame.event.get():
             if e.type == pygame.QUIT:
-                return
+                # Don't close the main window, just close the popup
+                waiting = False
             if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE:
                 waiting = False
             if e.type == pygame.MOUSEBUTTONDOWN:
-                if close_rect.collidepoint(e.pos) or bottom_close_rect.collidepoint(e.pos):
+                # Fixed: use bottom_close_rect instead of undefined close_rect
+                if bottom_close_rect.collidepoint(e.pos):
                     waiting = False
 
         pygame.time.delay(16)
@@ -355,8 +386,6 @@ def draw_ui(win, buttons, selected_algo, show_algo_dropdown, algorithms, show_th
     for btn in buttons:
         btn.draw(win, btn.is_hovered(mouse_pos))
 
-    label_text = f"Selected: {selected_algo}" if selected_algo else "Selected: (none)"
-    text = FONT.render(label_text, True, COLORS['TEXT'])
     label_text = f"Selected: {selected_algo}" if selected_algo else "Selected: (none)"
     text = FONT.render(label_text, True, COLORS['TEXT'])
     win.blit(text, (500, 20))
